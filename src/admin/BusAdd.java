@@ -44,39 +44,37 @@ public class BusAdd extends javax.swing.JFrame {
     }
 }
     
-        public void logEvent(int userId, String username, String action) 
-    {
-        dbConnector dbc = new dbConnector();
-        Connection con = dbc.getConnection();
-        PreparedStatement pstmt = null;
-        Timestamp time = new Timestamp(new Date().getTime());
+    public void logEvent(int userId, String username, String description, String userType) {
+    dbConnector dbc = new dbConnector();
+    Connection con = dbc.getConnection();
+    PreparedStatement pstmt = null;
+    Timestamp time = new Timestamp(new Date().getTime());
 
+    try {
+        String sql = "INSERT INTO tbl_log (u_id, u_username, login_time, u_type, log_status, log_description) "
+                   + "VALUES (?, ?, ?, ?, ?, ?)";
+        pstmt = con.prepareStatement(sql);
+        pstmt.setInt(1, userId);
+        pstmt.setString(2, username);
+        pstmt.setTimestamp(3, time);
+        pstmt.setString(4, userType);         // e.g., "Admin"
+        pstmt.setString(5, "Active");         // ✅ VALID log_status value
+        pstmt.setString(6, description);           // e.g., "Admin added a new bus: XYZ"
+
+        pstmt.executeUpdate();
+        System.out.println("Log recorded successfully.");
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(null, "Error recording log: " + e.getMessage());
+    } finally {
         try {
-            String sql = "INSERT INTO tbl_log (u_id, u_username, login_time, log_status, log_description) "
-                    + "VALUES ('" + userId + "', '" + username + "', '" + time + "', '" + action + "')";
-            pstmt = con.prepareStatement(sql);
-
-            /*            pstmt.setInt(1, userId);
-            pstmt.setString(2, username);
-            pstmt.setTimestamp(3, new Timestamp(new Date().getTime()));
-            pstmt.setString(4, userType);*/
-            pstmt.executeUpdate();
-            System.out.println("Login log recorded successfully.");
+            if (pstmt != null) pstmt.close();
+            if (con != null) con.close();
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error recording log: " + e.getMessage());
-        } finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(null, "Error closing resources: " + e.getMessage());
-            }
+            JOptionPane.showMessageDialog(null, "Error closing resources: " + e.getMessage());
         }
     }
+}
+
      
     /**
      * This method is called from within the constructor to initialize the form.
@@ -209,7 +207,9 @@ try (Connection conn = new dbConnector().getConnection();
     if (rowsInserted > 0) {
         JOptionPane.showMessageDialog(null, "Bus Added Successfully!");
         Session sess = Session.getInstance();
-        logEvent(sess.getUid(), sess.getUsername(), "Admin added a new bus: " + name.getText());
+     logEvent(sess.getUid(), sess.getUsername(), "Admin added a new bus: " + name.getText(), sess.getType());
+
+
         this.dispose();
     } else {
         JOptionPane.showMessageDialog(null, "Failed to add Bus! Please try again.");

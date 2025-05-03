@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
@@ -124,6 +125,37 @@ public class StaffBook extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(null, "Error logging out: " + ex.getMessage());
     }
 }
+     public void logEvent(int userId, String username, String description, String userType) {
+    dbConnector dbc = new dbConnector();
+    Connection con = dbc.getConnection();
+    PreparedStatement pstmt = null;
+    Timestamp time = new Timestamp(new Date().getTime());
+
+    try {
+        String sql = "INSERT INTO tbl_log (u_id, u_username, login_time, u_type, log_status, log_description) "
+                   + "VALUES (?, ?, ?, ?, ?, ?)";
+        pstmt = con.prepareStatement(sql);
+        pstmt.setInt(1, userId);
+        pstmt.setString(2, username);
+        pstmt.setTimestamp(3, time);
+        pstmt.setString(4, userType);         // e.g., "Admin"
+        pstmt.setString(5, "Active");         // ✅ VALID log_status value
+        pstmt.setString(6, description);           // e.g., "Admin added a new bus: XYZ"
+
+        pstmt.executeUpdate();
+        System.out.println("Log recorded successfully.");
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(null, "Error recording log: " + e.getMessage());
+    } finally {
+        try {
+            if (pstmt != null) pstmt.close();
+            if (con != null) con.close();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error closing resources: " + e.getMessage());
+        }
+    }
+}
+
     
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -417,6 +449,8 @@ public class StaffBook extends javax.swing.JFrame {
     private void jPanel19MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jPanel19MouseClicked
         PanelPrinter print = new PanelPrinter(jPanel5);
         print.printPanel();
+        
+        
     }//GEN-LAST:event_jPanel19MouseClicked
 
     private void busItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_busItemStateChanged
